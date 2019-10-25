@@ -161,4 +161,30 @@ public class FlattenListTest {
                                             "[client, group, bar]]}";
         assertEquals(expected, updatedValue.toString());
     }
+
+    @Test
+    public void nullValue() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("tags", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
+                                .field("env", SchemaBuilder.array(Schema.STRING_SCHEMA)
+                                        .optional())).optional())
+                .build();
+
+        final Struct value = new Struct(schema);
+        value.put("tags", null);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+        String expected = "Struct{tags_flat=[]}";
+        assertEquals(expected, updatedValue.toString());
+    }
 }
