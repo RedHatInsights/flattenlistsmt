@@ -23,7 +23,9 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.After;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -52,24 +54,35 @@ public class FlattenListTest {
     @Test
     public void basicCase() {
         final Map<String, String> props = new HashMap<>();
-        props.put("sourceFields", "address");
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
 
         xform.configure(props);
 
         final Schema schema = SchemaBuilder.struct()
-                .field("address", Schema.STRING_SCHEMA)
+                .field("tags", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
+                                .field("env", SchemaBuilder.array(Schema.STRING_SCHEMA).optional())))
                 .build();
 
         final Struct value = new Struct(schema);
-        value.put("address","{\"city\":\"Studenec\",\"code\":123}");
+        final Struct tags = new Struct(schema.field("tags").schema());
+        final Struct sat = new Struct(tags.schema().field("Sat").schema());
+        final List<String> env = new ArrayList<>(1);
+        env.add("prod");
+        sat.put("env", env);
+        tags.put("Sat", sat);
+        value.put("tags", tags);
 
         final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
         final SinkRecord transformedRecord = xform.apply(record);
 
         final Struct updatedValue = (Struct) transformedRecord.value();
-        assertEquals(1, updatedValue.schema().fields().size());
-        assertEquals("Studenec", updatedValue.getStruct("address").getString("city"));
-        assertEquals(new Integer(123), updatedValue.getStruct("address").getInt32("code"));
+        assertEquals(2, updatedValue.schema().fields().size());
+        assertEquals(2, updatedValue.getArray("tags_flat").size());
+        assertEquals("ahoj", ((List<Object>)updatedValue.getArray("tags_flat").get(0)).get(0));
+        assertEquals("cau", ((List<Object>)updatedValue.getArray("tags_flat").get(0)).get(1));
+        assertEquals("hello", ((List<Object>)updatedValue.getArray("tags_flat").get(1)).get(0));
     }
 
     @Test
