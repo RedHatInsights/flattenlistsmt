@@ -61,26 +61,26 @@ public class FlattenListTest {
 
         final Schema schema = SchemaBuilder.struct()
                 .field("tags", SchemaBuilder.struct()
-                        .field("sat", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
                                 .field("env", SchemaBuilder.array(Schema.STRING_SCHEMA).optional())))
                 .build();
 
         final Struct value = new Struct(schema);
         final Struct tags = new Struct(schema.field("tags").schema());
-        final Struct sat = new Struct(tags.schema().field("sat").schema());
+        final Struct sat = new Struct(tags.schema().field("Sat").schema());
         final List<String> env = new ArrayList<>(1);
         env.add("prod");
         sat.put("env", env);
-        tags.put("sat", sat);
+        tags.put("Sat", sat);
         value.put("tags", tags);
 
         final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
         final SinkRecord transformedRecord = xform.apply(record);
 
         final Struct updatedValue = (Struct) transformedRecord.value();
-        assertEquals(2, updatedValue.schema().fields().size());
-        assertEquals(1, updatedValue.getArray("tags_flat").size());
-        System.out.println(updatedValue.toString());
+        String expected = "Struct{tags=Struct{Sat=Struct{env=[prod]}}," +
+                                 "tags_flat=[[Sat, env, prod]]}";
+        assertEquals(expected, updatedValue.toString());
     }
 
     @Test
@@ -93,27 +93,72 @@ public class FlattenListTest {
 
         final Schema schema = SchemaBuilder.struct()
                 .field("tags", SchemaBuilder.struct()
-                        .field("sat", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
                                 .field("env", SchemaBuilder.array(Schema.STRING_SCHEMA).optional())))
                 .build();
 
         final Struct value = new Struct(schema);
         final Struct tags = new Struct(schema.field("tags").schema());
-        final Struct sat = new Struct(tags.schema().field("sat").schema());
+        final Struct sat = new Struct(tags.schema().field("Sat").schema());
         final List<String> env = new ArrayList<>(1);
         env.add("test1");
         env.add("test2");
         env.add("prod");
         sat.put("env", env);
-        tags.put("sat", sat);
+        tags.put("Sat", sat);
         value.put("tags", tags);
 
         final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
         final SinkRecord transformedRecord = xform.apply(record);
 
         final Struct updatedValue = (Struct) transformedRecord.value();
-        assertEquals(2, updatedValue.schema().fields().size());
-        assertEquals(3, updatedValue.getArray("tags_flat").size());
-        System.out.println(updatedValue.toString());
+        String expected = "Struct{tags=Struct{Sat=Struct{env=[test1, test2, prod]}}," +
+                                 "tags_flat=[[Sat, env, test1], " +
+                                 "[Sat, env, test2], " +
+                                 "[Sat, env, prod]]}";
+        assertEquals(expected, updatedValue.toString());
+    }
+
+    @Test
+    public void multipleHighLevels() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("tags", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
+                                .field("env", SchemaBuilder.array(Schema.STRING_SCHEMA).optional()))
+                        .field("client", SchemaBuilder.struct()
+                                .field("group", SchemaBuilder.array(Schema.STRING_SCHEMA).optional())))
+                .build();
+
+        final Struct value = new Struct(schema);
+        final Struct tags = new Struct(schema.field("tags").schema());
+        final Struct sat = new Struct(tags.schema().field("Sat").schema());
+        final List<String> env = new ArrayList<>(1);
+        env.add("prod");
+        sat.put("env", env);
+        tags.put("Sat", sat);
+        final Struct client = new Struct(tags.schema().field("client").schema());
+        final List<String> group = new ArrayList<>(1);
+        group.add("foo");
+        group.add("bar");
+        client.put("group", group);
+        tags.put("client", client);
+        value.put("tags", tags);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+        String expected = "Struct{tags=Struct{Sat=Struct{env=[prod]}," +
+                                             "client=Struct{group=[foo, bar]}}," +
+                                 "tags_flat=[[Sat, env, prod], " +
+                                            "[client, group, foo], " +
+                                            "[client, group, bar]]}";
+        assertEquals(expected, updatedValue.toString());
     }
 }
