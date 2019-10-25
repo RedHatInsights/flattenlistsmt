@@ -25,9 +25,6 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,17 +87,8 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         for (Field field : value.schema().fields()) {
             updatedValue.put(field.name(), value.get(field.name()));
         }
-        TreeLink rootLink = new TreeLink();
-        rootLink.setField(inputField);
-        rootLink.setValue(value.getStruct(inputField));
-
-        List<TreeLink> links = TreeLink.expand(rootLink);
-        List<List<String>> rootArr = new ArrayList<>();
-        for (TreeLink link : links) {
-            rootArr.add(link.getPathTo());
-        }
-
-        updatedValue.put(outputField, rootArr);
+        List<List<String>> arr = Processor.expand(value.getStruct(inputField));
+        updatedValue.put(outputField, arr);
         return updatedValue;
     }
 
