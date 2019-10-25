@@ -85,24 +85,20 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         return newRecord(record, updatedSchema, updatedValue);
     }
 
-    private void structs2lists(List<Struct> values, List<List<String>> outLists) {
-
-    }
-
     private Struct makeUpdatedValue(Struct value, Schema updatedSchema, String inputField, String outputField) {
         final Struct updatedValue = new Struct(updatedSchema);
         for (Field field : value.schema().fields()) {
             updatedValue.put(field.name(), value.get(field.name()));
         }
-        List<String> arr1 = new ArrayList<>();
-        arr1.add("ahoj");
-        arr1.add("cau");
-        List<String> arr2 = new ArrayList<>();
-        arr2.add("hello");
+        TreeLink rootLink = new TreeLink();
+        rootLink.setField(inputField);
+        rootLink.setValue(value.getStruct(inputField));
 
+        List<TreeLink> links = TreeLink.expand(rootLink);
         List<List<String>> rootArr = new ArrayList<>();
-        rootArr.add(arr1);
-        rootArr.add(arr2);
+        for (TreeLink link : links) {
+            rootArr.add(link.getPathTo());
+        }
 
         updatedValue.put(outputField, rootArr);
         return updatedValue;
