@@ -18,6 +18,7 @@ package com.redhat.insights.flattenlistsmt;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
+import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.transforms.Transformation;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
 import org.apache.kafka.connect.data.Field;
@@ -74,12 +75,19 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
     }
 
     private R applyWithSchema(R record) {
-        final Struct value = requireStruct(operatingValue(record), PURPOSE);
+        try {
+            final Struct value = requireStruct(operatingValue(record), PURPOSE);
 
-        final Schema updatedSchema = makeUpdatedSchema(value, outputField);
-        final Struct updatedValue = makeUpdatedValue(value, updatedSchema, sourceField, outputField);
+            final Schema updatedSchema = makeUpdatedSchema(value, outputField);
+            final Struct updatedValue = makeUpdatedValue(value, updatedSchema, sourceField, outputField);
 
-        return newRecord(record, updatedSchema, updatedValue);
+            return newRecord(record, updatedSchema, updatedValue);
+        } catch (DataException e) {
+            LOGGER.warn("FlattenList fields missing from record.");
+            LOGGER.warn(record.toString());
+            LOGGER.warn(e.toString());
+            return record;
+        }
     }
 
     private Struct makeUpdatedValue(Struct value, Schema updatedSchema, String inputField, String outputField) {
