@@ -90,6 +90,15 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         }
     }
 
+    private Schema makeUpdatedSchema(Struct value, String outputField) {
+        final SchemaBuilder builder = SchemaBuilder.struct();
+        for (Field field : value.schema().fields()) {
+            builder.field(field.name(), field.schema());
+        }
+        builder.field(outputField, SchemaBuilder.array(SchemaBuilder.array(Schema.STRING_SCHEMA)).optional());
+        return builder.build();
+    }
+
     private Struct makeUpdatedValue(Struct value, Schema updatedSchema, String inputField, String outputField) {
         final Struct updatedValue = new Struct(updatedSchema);
         for (Field field : value.schema().fields()) {
@@ -98,15 +107,6 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         List<List<String>> arr = Processor.expand(value.getStruct(inputField));
         updatedValue.put(outputField, arr);
         return updatedValue;
-    }
-
-    private Schema makeUpdatedSchema(Struct value, String outputField) {
-        final SchemaBuilder builder = SchemaBuilder.struct();
-        for (Field field : value.schema().fields()) {
-            builder.field(field.name(), field.schema());
-        }
-        builder.field(outputField, SchemaBuilder.array(SchemaBuilder.array(Schema.STRING_SCHEMA)).optional());
-        return builder.build();
     }
 
     @Override

@@ -7,11 +7,14 @@
         "connection.url": "http://elastic:9200",
         "key.ignore": "false",
         "type.name": "person",
-        "transforms": "unwrap,extract,expand",
+        "transforms": "unwrap,extract,expand,flattenList",
         "transforms.unwrap.type": "io.debezium.transforms.UnwrapFromEnvelope",
         "transforms.extract.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
         "transforms.extract.field": "id",
         "transforms.expand.type": "com.redhat.insights.expandjsonsmt.ExpandJSON$Value",
-        "transforms.expand.sourceFields": "tags"
+        "transforms.expand.sourceFields": "tags",
+        "transforms.flattenList.type": "com.redhat.insights.flattenlistsmt.FlattenList$Value",
+        "transforms.flattenList.sourceField": "tags",
+        "transforms.flattenList.outputField": "tags_flat"
     }
 }
