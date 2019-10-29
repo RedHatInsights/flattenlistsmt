@@ -26,8 +26,8 @@ RUN mkdir $KAFKA_CONNECT_ES_DIR && cd $KAFKA_CONNECT_ES_DIR &&\
         curl -sO http://central.maven.org/maven2/com/google/code/gson/gson/2.4/gson-2.4.jar
 
 RUN curl -fSL -o /tmp/plugin.tar.gz \
-    https://github.com/RedHatInsights/expandjsonsmt/releases/download/0.0.2/kafka-connect-smt-expandjsonsmt-0.0.2.tar.gz && \
+    https://github.com/RedHatInsights/expandjsonsmt/releases/download/0.0.3/kafka-connect-smt-expandjsonsmt-0.0.3.tar.gz && \
     tar -xzf /tmp/plugin.tar.gz -C $KAFKA_CONNECT_PLUGINS_DIR && \
     rm -f /tmp/plugin.tar.gz;
 
-COPY ./target/kafka-connect-smt-flattenlistsmt-0.0.1-jar-with-dependencies.jar $KAFKA_CONNECT_PLUGINS_DIR
+COPY ./target/kafka-connect-smt-flattenlistsmt-0.0.1-assemble-all.jar $KAFKA_CONNECT_PLUGINS_DIR
