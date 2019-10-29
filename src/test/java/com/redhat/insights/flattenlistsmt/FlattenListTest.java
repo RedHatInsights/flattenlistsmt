@@ -84,6 +84,40 @@ public class FlattenListTest {
     }
 
     @Test
+    public void basicCaseJoin() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
+        props.put("join", "true");
+        props.put("delimiterJoin", "/");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("tags", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
+                                .field("env", SchemaBuilder.array(Schema.STRING_SCHEMA).optional())))
+                .build();
+
+        final Struct value = new Struct(schema);
+        final Struct tags = new Struct(schema.field("tags").schema());
+        final Struct sat = new Struct(tags.schema().field("Sat").schema());
+        final List<String> env = new ArrayList<>(1);
+        env.add("prod");
+        sat.put("env", env);
+        tags.put("Sat", sat);
+        value.put("tags", tags);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+        String expected = "Struct{tags=Struct{Sat=Struct{env=[prod]}}," +
+                                 "tags_flat=[Sat/env/prod]}";
+        assertEquals(expected, updatedValue.toString());
+    }
+
+    @Test
     public void multipleTags() {
         final Map<String, String> props = new HashMap<>();
         props.put("sourceField", "tags");

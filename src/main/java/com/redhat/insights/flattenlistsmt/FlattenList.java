@@ -43,25 +43,34 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
     interface ConfigName {
         String SOURCE_FIELD = "sourceField";
         String OUTPUT_FIELD = "outputField";
+        String DELIMITER_JOIN = "delimiterJoin";
+        String JOIN = "join";
     }
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(ConfigName.SOURCE_FIELD, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM,
                     "Source field name. This field will flattened to output field.")
             .define(ConfigName.OUTPUT_FIELD, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM,
-                            "Output field name. This field will store flattened value of source field.");
+                            "Output field name. This field will store flattened value of source field.")
+            .define(ConfigName.DELIMITER_JOIN, ConfigDef.Type.STRING, "|", ConfigDef.Importance.MEDIUM,
+                    "If join mode set, join with that list members into result string.")
+            .define(ConfigName.JOIN, ConfigDef.Type.BOOLEAN, false, ConfigDef.Importance.MEDIUM,
+                    "Join list members to result string.");
 
     private static final String PURPOSE = "flatten source field into the output field";
 
     private String sourceField;
     private String outputField;
-    private String delimiterJoin = ".";
+    private String delimiterJoin;
+    private boolean join;
 
     @Override
     public void configure(Map<String, ?> configs) {
         final SimpleConfig config = new SimpleConfig(CONFIG_DEF, configs);
         sourceField = config.getString(ConfigName.SOURCE_FIELD);
         outputField = config.getString(ConfigName.OUTPUT_FIELD);
+        delimiterJoin = config.getString(ConfigName.DELIMITER_JOIN);
+        join = config.getBoolean(ConfigName.JOIN);
     }
 
     @Override
@@ -95,7 +104,15 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         for (Field field : value.schema().fields()) {
             builder.field(field.name(), field.schema());
         }
-        builder.field(outputField, SchemaBuilder.array(SchemaBuilder.array(Schema.STRING_SCHEMA)).optional());
+
+        Schema outFieldSchema;
+        if (join) {
+            outFieldSchema = SchemaBuilder.array(Schema.STRING_SCHEMA);
+        } else {
+            outFieldSchema = SchemaBuilder.array(SchemaBuilder.array(Schema.STRING_SCHEMA)).optional();
+        }
+        builder.field(outputField, outFieldSchema);
+
         return builder.build();
     }
 
@@ -105,8 +122,22 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
             updatedValue.put(field.name(), value.get(field.name()));
         }
         List<List<String>> arr = Processor.expand(value.getStruct(inputField));
-        updatedValue.put(outputField, arr);
+        if (join) {
+            List<String> joinedArr = listOfLists2Joined(arr, delimiterJoin);
+            updatedValue.put(outputField, joinedArr);
+        } else {
+            updatedValue.put(outputField, arr);
+        }
         return updatedValue;
+    }
+
+    private static List<String> listOfLists2Joined(List<List<String>> arr, String delimiterJoin) {
+        List<String> joinedArr = new ArrayList<>(arr.size());
+        for (List<String> mem : arr) {
+            String joined = String.join(delimiterJoin, mem);
+            joinedArr.add(joined);
+        }
+        return joinedArr;
     }
 
     @Override
