@@ -162,6 +162,9 @@ public class FlattenListTest {
         assertEquals(expected, updatedValue.toString());
     }
 
+    /**
+     * Null value is converted to empty list.
+     */
     @Test
     public void nullValue() {
         final Map<String, String> props = new HashMap<>();
@@ -185,6 +188,32 @@ public class FlattenListTest {
 
         final Struct updatedValue = (Struct) transformedRecord.value();
         String expected = "Struct{tags_flat=[]}";
+        assertEquals(expected, updatedValue.toString());
+    }
+
+    /**
+     * Unexpected schema, on error it returns original value.
+     */
+    @Test
+    public void intValue() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("tags", Schema.INT32_SCHEMA)
+                .build();
+
+        final Struct value = new Struct(schema);
+        value.put("tags", 1);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+        String expected = "Struct{tags=1}";
         assertEquals(expected, updatedValue.toString());
     }
 }
