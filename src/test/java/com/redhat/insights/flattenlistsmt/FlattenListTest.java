@@ -154,6 +154,40 @@ public class FlattenListTest {
     }
 
     @Test
+    public void nullLeaf() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("tags", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
+                                .field("env", SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA).optional())))
+                .build();
+
+        final Struct value = new Struct(schema);
+        final Struct tags = new Struct(schema.field("tags").schema());
+        final Struct sat = new Struct(tags.schema().field("Sat").schema());
+        final List<String> env = new ArrayList<>(1);
+        env.add("prod");
+        env.add(null);
+        sat.put("env", env);
+        tags.put("Sat", sat);
+        value.put("tags", tags);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+        String expected = "Struct{tags=Struct{Sat=Struct{env=[prod, null]}}," +
+                                 "tags_flat=[[Sat, env, prod], " +
+                                            "[Sat, env, null]]}";
+        assertEquals(expected, updatedValue.toString());
+    }
+
+    @Test
     public void multipleHighLevels() {
         final Map<String, String> props = new HashMap<>();
         props.put("sourceField", "tags");
