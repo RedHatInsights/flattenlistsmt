@@ -88,7 +88,7 @@ public class FlattenListTest {
         final Map<String, String> props = new HashMap<>();
         props.put("sourceField", "tags");
         props.put("outputField", "tags_flat");
-        props.put("join", "true");
+        props.put("mode", "join");
         props.put("delimiterJoin", "/");
 
         xform.configure(props);
