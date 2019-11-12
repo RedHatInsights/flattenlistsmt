@@ -16,7 +16,7 @@
         "transforms.flattenList.type": "com.redhat.insights.flattenlistsmt.FlattenList$Value",
         "transforms.flattenList.sourceField": "tags",
         "transforms.flattenList.outputField": "tags_flat",
-        "transforms.flattenList.join": "true",
-        "transforms.flattenList.delimiterJoin": "."
+        "transforms.flattenList.mode": "keys",
+        "transforms.flattenList.keys": "namespace,key,value"
     }
 }

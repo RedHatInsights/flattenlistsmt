@@ -30,4 +30,4 @@ RUN curl -fSL -o /tmp/plugin.tar.gz \
     tar -xzf /tmp/plugin.tar.gz -C $KAFKA_CONNECT_PLUGINS_DIR && \
     rm -f /tmp/plugin.tar.gz;
 
-COPY ./target/kafka-connect-smt-flattenlistsmt-0.0.1-assemble-all.jar $KAFKA_CONNECT_PLUGINS_DIR
+COPY ./target/kafka-connect-smt-flattenlistsmt-0.0.2-assemble-all.jar $KAFKA_CONNECT_PLUGINS_DIR
