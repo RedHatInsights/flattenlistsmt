@@ -54,7 +54,7 @@ class Processor {
                         for (Object obj : level.getValue().getArray(field.name())) {
                             Level elementLevel = new Level();
                             elementLevel.getPathTo().addAll(childLevel.getPathTo());
-                            String val = String.format("%s", obj);
+                            String val = obj == null ? null : String.format("%s", obj);
                             elementLevel.getPathTo().add(val);
                             outLevels.add(elementLevel);
                         }
