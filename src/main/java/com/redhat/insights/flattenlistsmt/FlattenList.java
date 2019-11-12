@@ -122,7 +122,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         Schema elementSchema = null;
         switch (mode){
             case MODE_ARRAY:
-                elementSchema = SchemaBuilder.array(Schema.STRING_SCHEMA);
+                elementSchema = SchemaBuilder.array(Schema.OPTIONAL_STRING_SCHEMA);
                 break;
             case MODE_JOIN:
                 elementSchema = Schema.STRING_SCHEMA;

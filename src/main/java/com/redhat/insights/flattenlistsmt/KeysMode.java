@@ -17,7 +17,7 @@ class KeysMode {
     static Schema buildElementSchema(final List<String> keys) {
         SchemaBuilder structBuilder = SchemaBuilder.struct();
         for (String key : keys) {
-            structBuilder.field(key, Schema.STRING_SCHEMA);
+            structBuilder.field(key, Schema.OPTIONAL_STRING_SCHEMA);
         }
         Schema elementSchema = structBuilder.build();
         return elementSchema;
