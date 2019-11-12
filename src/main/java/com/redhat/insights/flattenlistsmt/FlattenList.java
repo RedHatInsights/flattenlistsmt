@@ -82,7 +82,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         keys = config.getList(ConfigName.KEYS);
 
         if (!Collections.unmodifiableList(Arrays.asList(MODE_ARRAY, MODE_JOIN, MODE_KEYS)).contains(mode)) {
-            LOGGER.error("unknown mode '%s'", mode);
+            LOGGER.error("unknown mode '{}'", mode);
             System.exit(1);
         }
     }
@@ -152,7 +152,8 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
                 updatedValue.put(outputField, joinedArr);
                 break;
             case MODE_KEYS:
-                // TODO
+                List<Struct> structs = KeysMode.lists2Structs(keys, arr);
+                updatedValue.put(outputField, structs);
                 break;
         }
         return updatedValue;
