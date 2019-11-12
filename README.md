@@ -47,3 +47,40 @@ cd dev
 # ... stop containers
 docker-compose down
 ~~~
+
+## Modes
+You can set three different modes to get output in required format:
+
+### Array mode
+Default, without additional parameters needed.
+~~~json
+"transforms.flattenList.mode": "array"
+~~~
+Output:
+~~~json
+"tags_flat": [["sat","env",null]]
+~~~
+
+### Join mode
+Join output to one string
+~~~json
+"transforms.flattenList.mode": "join"
+"transforms.flattenList.delimiterJoin": "|"
+~~~
+Output:
+~~~json
+"tags_flat": ["sat|env|null"]
+~~~
+
+### Keys mode
+Join output to one string
+~~~json
+"transforms.flattenList.mode": "keys"
+"transforms.flattenList.keys": "namespace,key,value"
+~~~
+Output:
+~~~json
+"tags_flat": [{"namespace": "sat",
+               "key": "env",
+               "value": null}]
+~~~
