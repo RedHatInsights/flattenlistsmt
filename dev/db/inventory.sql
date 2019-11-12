@@ -5,7 +5,7 @@ CREATE TABLE public.hosts (
     PRIMARY KEY (id)
 );
 
-INSERT INTO public.hosts VALUES (1, '12234', '{"Sat": {"env": ["prod"]},
+INSERT INTO public.hosts VALUES (1, '12234', '{"Sat": {"env": [null, "prod"]},
                                                "client": {"ansible_group": ["foo", "bar"]}}');
 INSERT INTO public.hosts VALUES (2, '34634', '{"Sat": {"env": ["prod"]},
                                                "client": {"ansible_group": ["foo", "bar"]}}');
