@@ -51,7 +51,12 @@ class Processor {
                 case ARRAY:
                     Schema.Type elementSchemaType = field.schema().valueSchema().type();
                     if (field.schema().valueSchema().type() != Schema.Type.STRUCT) {
-                        for (Object obj : level.getValue().getArray(field.name())) {
+                        List<Object> arr = level.getValue().getArray(field.name());
+                        if (arr.isEmpty()) {
+                            arr.add(null); // map empty arrays to null values not to eliminate it from output
+                        }
+
+                        for (Object obj : arr) {
                             Level elementLevel = new Level();
                             elementLevel.getPathTo().addAll(childLevel.getPathTo());
                             String val = obj == null ? null : String.format("%s", obj);
