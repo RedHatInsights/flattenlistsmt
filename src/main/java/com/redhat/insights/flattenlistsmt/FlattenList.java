@@ -29,6 +29,8 @@ import org.apache.kafka.connect.data.Struct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,6 +51,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         String SOURCE_FIELD = "sourceField";
         String OUTPUT_FIELD = "outputField";
         String DELIMITER_JOIN = "delimiterJoin";
+        String ENCODE = "encode";
         String MODE = "mode";
         String KEYS = "keys";
     }
@@ -60,6 +63,8 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
                             "Output field name. This field will store flattened value of source field.")
             .define(ConfigName.DELIMITER_JOIN, ConfigDef.Type.STRING, "|", ConfigDef.Importance.MEDIUM,
                     "If 'join' mode set, join with that list members into result string.")
+            .define(ConfigName.ENCODE, ConfigDef.Type.BOOLEAN, false, ConfigDef.Importance.MEDIUM,
+                    "Encode individual segments using URL encoding")
             .define(ConfigName.MODE, ConfigDef.Type.STRING, "array", ConfigDef.Importance.MEDIUM,
                     "How to provide result (array, join, keys).")
             .define(ConfigName.KEYS, ConfigDef.Type.LIST, "", ConfigDef.Importance.MEDIUM,
@@ -70,6 +75,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
     private String sourceField;
     private String outputField;
     private String delimiterJoin;
+    private boolean encode;
     private String mode;
     private List<String> keys;
 
@@ -80,6 +86,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         outputField = config.getString(ConfigName.OUTPUT_FIELD);
         mode = config.getString(ConfigName.MODE);
         delimiterJoin = config.getString(ConfigName.DELIMITER_JOIN);
+        encode = config.getBoolean(ConfigName.ENCODE);
         keys = config.getList(ConfigName.KEYS);
 
         if (!Collections.unmodifiableList(Arrays.asList(MODE_ARRAY, MODE_JOIN, MODE_KEYS)).contains(mode)) {
@@ -149,7 +156,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
                 updatedValue.put(outputField, arr);
                 break;
             case MODE_JOIN:
-                List<String> joinedArr = listOfLists2Joined(arr, delimiterJoin);
+                List<String> joinedArr = listOfLists2Joined(arr, delimiterJoin, encode);
                 updatedValue.put(outputField, joinedArr);
                 break;
             case MODE_KEYS:
@@ -160,23 +167,35 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         return updatedValue;
     }
 
-    private static List<String> listOfLists2Joined(List<List<String>> arr, String delimiterJoin) {
+    private static List<String> listOfLists2Joined(List<List<String>> arr, String delimiterJoin, boolean encode) {
         List<String> joinedArr = new ArrayList<>(arr.size());
         for (List<String> mem : arr) {
-            String joined = String.join(delimiterJoin, transformSegments(mem));
+            String joined = String.join(delimiterJoin, transformSegments(mem, encode));
             joinedArr.add(joined);
         }
         return joinedArr;
     }
 
-    private static List<String> transformSegments (final List<String> tag) {
+    private static List<String> transformSegments (final List<String> tag, final boolean encode) {
         return tag.stream().map(segment -> {
             if (segment == null) {
                 return "";
             }
 
+            if (encode) {
+                return encode(segment);
+            }
+
             return segment;
         }).collect(Collectors.toList());
+    }
+
+    private static String encode (final String value) {
+        try {
+            return URLEncoder.encode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("UTF-8 not supported", e);
+        }
     }
 
     @Override

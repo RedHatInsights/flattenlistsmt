@@ -282,4 +282,73 @@ public class FlattenListJoinTest {
                                  "tags_flat=[Sat/env/]}";
         assertEquals(expected, updatedValue.toString());
     }
+
+    @Test
+    public void encoding() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
+        props.put("mode", "join");
+        props.put("delimiterJoin", "/");
+        props.put("encode", "true");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("tags", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
+                                .field("#any/utf8=characters|Ω", SchemaBuilder.array(Schema.STRING_SCHEMA).optional())))
+                .build();
+
+        final Struct value = new Struct(schema);
+        final Struct tags = new Struct(schema.field("tags").schema());
+        final Struct key = new Struct(tags.schema().field("Sat").schema());
+        final List<String> values = new ArrayList<>(1);
+        values.add("123456-_/=?!|Ω");
+        key.put("#any/utf8=characters|Ω", values);
+        tags.put("Sat", key);
+        value.put("tags", tags);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+        String expected = "Struct{tags=Struct{Sat=Struct{#any/utf8=characters|Ω=[123456-_/=?!|Ω]}}," +
+                                 "tags_flat=[Sat/%23any%2Futf8%3Dcharacters%7C%CE%A9/123456-_%2F%3D%3F%21%7C%CE%A9]}";
+        assertEquals(expected, updatedValue.toString());
+    }
+
+    @Test
+    public void encodingWithNull() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "tags");
+        props.put("outputField", "tags_flat");
+        props.put("mode", "join");
+        props.put("delimiterJoin", "/");
+        props.put("encode", "true");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("tags", SchemaBuilder.struct()
+                        .field("Sat", SchemaBuilder.struct()
+                                .field("#any/utf8=characters|Ω", SchemaBuilder.array(Schema.STRING_SCHEMA).optional())))
+                .build();
+
+        final Struct value = new Struct(schema);
+        final Struct tags = new Struct(schema.field("tags").schema());
+        final Struct key = new Struct(tags.schema().field("Sat").schema());
+        final List<String> values = new ArrayList<>(1);
+        key.put("#any/utf8=characters|Ω", values);
+        tags.put("Sat", key);
+        value.put("tags", tags);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+        String expected = "Struct{tags=Struct{Sat=Struct{#any/utf8=characters|Ω=[null]}}," +
+                                 "tags_flat=[Sat/%23any%2Futf8%3Dcharacters%7C%CE%A9/]}";
+        assertEquals(expected, updatedValue.toString());
+    }
 }

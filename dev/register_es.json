@@ -7,7 +7,7 @@
         "connection.url": "http://elastic:9200",
         "key.ignore": "false",
         "type.name": "person",
-        "transforms": "unwrap,extract,expand,flattenList",
+        "transforms": "unwrap,extract,expand,flattenList,flattenListString",
         "transforms.unwrap.type": "io.debezium.transforms.UnwrapFromEnvelope",
         "transforms.extract.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
         "transforms.extract.field": "id",
@@ -17,6 +17,12 @@
         "transforms.flattenList.sourceField": "tags",
         "transforms.flattenList.outputField": "tags_flat",
         "transforms.flattenList.mode": "keys",
-        "transforms.flattenList.keys": "namespace,key,value"
+        "transforms.flattenList.keys": "namespace,key,value",
+        "transforms.flattenListString.type": "com.redhat.insights.flattenlistsmt.FlattenList$Value",
+        "transforms.flattenListString.sourceField": "tags",
+        "transforms.flattenListString.outputField": "tags_string",
+        "transforms.flattenListString.mode": "join",
+        "transforms.flattenListString.delimiterJoin": "/",
+        "transforms.flattenListString.encode": true
     }
 }
