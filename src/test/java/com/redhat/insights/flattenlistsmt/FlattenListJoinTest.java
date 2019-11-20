@@ -143,7 +143,7 @@ public class FlattenListJoinTest {
         final Struct updatedValue = (Struct) transformedRecord.value();
         String expected = "Struct{tags=Struct{Sat=Struct{env=[prod, null]}}," +
                                  "tags_flat=[Sat/env/prod, " +
-                                            "Sat/env/null]}";
+                                            "Sat/env/]}";
         assertEquals(expected, updatedValue.toString());
     }
 
@@ -279,7 +279,7 @@ public class FlattenListJoinTest {
 
         final Struct updatedValue = (Struct) transformedRecord.value();
         String expected = "Struct{tags=Struct{Sat=Struct{env=[null]}}," +
-                                 "tags_flat=[Sat/env/null]}";
+                                 "tags_flat=[Sat/env/]}";
         assertEquals(expected, updatedValue.toString());
     }
 }

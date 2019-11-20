@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.apache.kafka.connect.transforms.util.Requirements.requireStruct;
 
@@ -162,10 +163,20 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
     private static List<String> listOfLists2Joined(List<List<String>> arr, String delimiterJoin) {
         List<String> joinedArr = new ArrayList<>(arr.size());
         for (List<String> mem : arr) {
-            String joined = String.join(delimiterJoin, mem);
+            String joined = String.join(delimiterJoin, transformSegments(mem));
             joinedArr.add(joined);
         }
         return joinedArr;
+    }
+
+    private static List<String> transformSegments (final List<String> tag) {
+        return tag.stream().map(segment -> {
+            if (segment == null) {
+                return "";
+            }
+
+            return segment;
+        }).collect(Collectors.toList());
     }
 
     @Override
