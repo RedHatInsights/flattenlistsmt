@@ -69,7 +69,16 @@ Join output to one string
 ~~~
 Output:
 ~~~json
-"tags_flat": ["sat|env|null"]
+"tags_flat": ["sat|env|"]
+~~~
+
+Optionally, the elements can be percent-encoded in order to prevent the element values from interfering with the delimiter character.
+~~~json
+"transforms.flattenList.encode": true
+~~~
+Output:
+~~~json
+"tags_flat": ["sat|envwith%7Cspecialchar|"]
 ~~~
 
 ### Keys mode
