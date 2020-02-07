@@ -278,7 +278,7 @@ public class FlattenListJoinTest {
         final SinkRecord transformedRecord = xform.apply(record);
 
         final Struct updatedValue = (Struct) transformedRecord.value();
-        String expected = "Struct{tags=Struct{Sat=Struct{env=[null]}}," +
+        String expected = "Struct{tags=Struct{Sat=Struct{env=[]}}," +
                                  "tags_flat=[Sat/env/]}";
         assertEquals(expected, updatedValue.toString());
     }
@@ -347,7 +347,7 @@ public class FlattenListJoinTest {
         final SinkRecord transformedRecord = xform.apply(record);
 
         final Struct updatedValue = (Struct) transformedRecord.value();
-        String expected = "Struct{tags=Struct{Sat=Struct{#any/utf8=characters|Ω=[null]}}," +
+        String expected = "Struct{tags=Struct{Sat=Struct{#any/utf8=characters|Ω=[]}}," +
                                  "tags_flat=[Sat/%23any%2Futf8%3Dcharacters%7C%CE%A9/]}";
         assertEquals(expected, updatedValue.toString());
     }
