@@ -345,7 +345,7 @@ public class FlattenListKeysTest {
         final SinkRecord transformedRecord = xform.apply(record);
 
         final Struct updatedValue = (Struct) transformedRecord.value();
-        String expected = "Struct{tags=Struct{Sat=Struct{env=[null]}}," +
+        String expected = "Struct{tags=Struct{Sat=Struct{env=[]}}," +
                                  "tags_flat=[Struct{namespace=Sat,key=env}]}";
         assertEquals(expected, updatedValue.toString());
     }

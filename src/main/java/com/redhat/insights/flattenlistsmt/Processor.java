@@ -7,11 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class Processor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class);
+    private static final List<Object> NULL_SINGLETON_LIST = Collections.singletonList(null);
 
     static List<List<String>> expand(Struct struct) {
         List<List<String>> result = new ArrayList<>();
@@ -53,7 +55,8 @@ class Processor {
                     if (field.schema().valueSchema().type() != Schema.Type.STRUCT) {
                         List<Object> arr = level.getValue().getArray(field.name());
                         if (arr.isEmpty()) {
-                            arr.add(null); // map empty arrays to null values not to eliminate it from output
+                            // map empty arrays to null values not to eliminate it from output
+                            arr = NULL_SINGLETON_LIST;
                         }
 
                         for (Object obj : arr) {
