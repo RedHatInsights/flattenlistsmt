@@ -117,7 +117,11 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
             LOGGER.warn("FlattenList fields missing from record.");
             LOGGER.warn(record.toString());
             LOGGER.warn(e.toString());
-            return record;
+
+            R newrecord = newRecord(record, record.valueSchema(), record.value());
+            LOGGER.warn("Falled to process flattenlist field. Passing non flattened record through.");
+            LOGGER.warn(newrecord.toString());
+            return newrecord;
         }
     }
 
