@@ -5,7 +5,7 @@
 
 	<groupId>com.redhat.insights.flattenlistsmt</groupId>
 	<artifactId>kafka-connect-smt-flattenlistsmt</artifactId>
-	<version>0.0.4</version>
+	<version>0.0.5</version>
 
 	<repositories>
 		<repository>
@@ -102,6 +102,11 @@
 			<classifier>tests</classifier>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.9</version>
+        </dependency>
 	</dependencies>
 
 	<build>
