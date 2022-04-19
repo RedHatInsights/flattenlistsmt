@@ -5,7 +5,7 @@
 
 	<groupId>com.redhat.insights.flattenlistsmt</groupId>
 	<artifactId>kafka-connect-smt-flattenlistsmt</artifactId>
-	<version>0.0.5</version>
+	<version>0.0.6</version>
 
 	<repositories>
 		<repository>
