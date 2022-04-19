@@ -168,17 +168,16 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         for (Field field : value.schema().fields()) {
             updatedValue.put(field.name(), value.get(field.name()));
         }
-        List<List<String>> arr = Processor.expand(value.getStruct(inputField));
         switch (mode){
             case MODE_ARRAY:
-                updatedValue.put(outputField, arr);
+                updatedValue.put(outputField, Processor.expand(value.getStruct(inputField)));
                 break;
             case MODE_JOIN:
-                List<String> joinedArr = listOfLists2Joined(arr, delimiterJoin, encode);
+                List<String> joinedArr = listOfLists2Joined(Processor.expand(value.getStruct(inputField)), delimiterJoin, encode);
                 updatedValue.put(outputField, joinedArr);
                 break;
             case MODE_KEYS:
-                List<Struct> structs = KeysMode.lists2Structs(keys, arr);
+                List<Struct> structs = KeysMode.lists2Structs(keys, Processor.expand(value.getStruct(inputField)));
                 updatedValue.put(outputField, structs);
                 break;
             case MODE_OBJECT:
