@@ -202,4 +202,50 @@ public class FlattenListObjectTest {
 
         assertEquals(expected, updatedValue.toString());
     }
+
+    @Test
+    public void multipleRootFields() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("sourceField", "per_reporter_staleness");
+        props.put("outputField", "per_reporter_staleness_flat");
+        props.put("mode", "object");
+        props.put("rootKey", "reporter");
+
+        xform.configure(props);
+
+        final Schema schema = SchemaBuilder.struct()
+                .field("id", SchemaBuilder.STRING_SCHEMA)
+                .field("per_reporter_staleness", SchemaBuilder.struct()
+                        .field("FOO", SchemaBuilder.struct()
+                                .field("last_check_in", SchemaBuilder.STRING_SCHEMA)
+                                .field("stale_timestamp", SchemaBuilder.STRING_SCHEMA)
+                                .field("check_in_succeeded", SchemaBuilder.BOOLEAN_SCHEMA)))
+                .build();
+
+        final Struct value = new Struct(schema);
+        final Struct perReporterStaleness = new Struct(schema.field("per_reporter_staleness").schema());
+
+        final Struct foo = new Struct(perReporterStaleness.schema().field("FOO").schema());
+        foo.put("last_check_in", "2022-04-14T15:00:09.785661+00:00");
+        foo.put("stale_timestamp","2022-04-15T15:00:09.583189+00:00");
+        foo.put("check_in_succeeded", true);
+        perReporterStaleness.put("FOO", foo);
+
+        value.put("id", "1234");
+        value.put("per_reporter_staleness", perReporterStaleness);
+
+        final SinkRecord record = new SinkRecord("test", 0, null, null, schema, value, 0);
+        final SinkRecord transformedRecord = xform.apply(record);
+
+        final Struct updatedValue = (Struct) transformedRecord.value();
+
+        String expected = "Struct{" +
+                "id=1234," +
+                "per_reporter_staleness=Struct{" +
+                "FOO=Struct{last_check_in=2022-04-14T15:00:09.785661+00:00,stale_timestamp=2022-04-15T15:00:09.583189+00:00,check_in_succeeded=true}}," +
+                "per_reporter_staleness_flat=[" +
+                "Struct{reporter=FOO,last_check_in=2022-04-14T15:00:09.785661+00:00,stale_timestamp=2022-04-15T15:00:09.583189+00:00,check_in_succeeded=true}]}";
+
+        assertEquals(expected, updatedValue.toString());
+    }
 }

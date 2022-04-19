@@ -154,7 +154,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
                 elementSchema = KeysMode.buildElementSchema(keys);
                 break;
             case MODE_OBJECT:
-                elementSchema = ObjectMode.buildSchema(rootKey, value);
+                elementSchema = ObjectMode.buildSchema(rootKey, sourceField, value);
                 break;
         }
         Schema outFieldSchema = SchemaBuilder.array(elementSchema);
@@ -182,7 +182,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
                 updatedValue.put(outputField, structs);
                 break;
             case MODE_OBJECT:
-                List<Struct> object = ObjectMode.flattenValue(rootKey, value);
+                List<Struct> object = ObjectMode.flattenValue(rootKey, sourceField, value);
                 updatedValue.put(outputField, object);
                 break;
         }
