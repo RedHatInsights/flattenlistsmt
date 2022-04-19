@@ -48,6 +48,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
     private static final String MODE_ARRAY = "array";
     private static final String MODE_JOIN = "join";
     private static final String MODE_KEYS = "keys";
+    private static final String MODE_OBJECT = "object";
 
     interface ConfigName {
         String SOURCE_FIELD = "sourceField";
@@ -56,6 +57,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         String ENCODE = "encode";
         String MODE = "mode";
         String KEYS = "keys";
+        String ROOT_KEY = "rootKey";
     }
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
@@ -70,7 +72,9 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
             .define(ConfigName.MODE, ConfigDef.Type.STRING, "array", ConfigDef.Importance.MEDIUM,
                     "How to provide result (array, join, keys).")
             .define(ConfigName.KEYS, ConfigDef.Type.LIST, "", ConfigDef.Importance.MEDIUM,
-                    "If 'keys' mode set, list values to these keys.");
+                    "If 'keys' mode set, list values to these keys.")
+            .define(ConfigName.ROOT_KEY, ConfigDef.Type.STRING, "", ConfigDef.Importance.MEDIUM,
+                    "If 'object' mode set, this defines the key for the root field.");
 
     private static final String PURPOSE = "flatten source field into the output field";
 
@@ -80,6 +84,7 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
     private boolean encode;
     private String mode;
     private List<String> keys;
+    private String rootKey;
 
     @Override
     public void configure(Map<String, ?> configs) {
@@ -90,8 +95,9 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
         delimiterJoin = config.getString(ConfigName.DELIMITER_JOIN);
         encode = config.getBoolean(ConfigName.ENCODE);
         keys = config.getList(ConfigName.KEYS);
+        rootKey = config.getString(ConfigName.ROOT_KEY);
 
-        if (!Collections.unmodifiableList(Arrays.asList(MODE_ARRAY, MODE_JOIN, MODE_KEYS)).contains(mode)) {
+        if (!Collections.unmodifiableList(Arrays.asList(MODE_ARRAY, MODE_JOIN, MODE_KEYS, MODE_OBJECT)).contains(mode)) {
             LOGGER.error("unknown mode '{}'", mode);
             System.exit(1);
         }
@@ -147,6 +153,9 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
             case MODE_KEYS:
                 elementSchema = KeysMode.buildElementSchema(keys);
                 break;
+            case MODE_OBJECT:
+                elementSchema = ObjectMode.buildSchema(rootKey, value);
+                break;
         }
         Schema outFieldSchema = SchemaBuilder.array(elementSchema);
         builder.field(outputField, outFieldSchema);
@@ -171,6 +180,10 @@ abstract class FlattenList<R extends ConnectRecord<R>> implements Transformation
             case MODE_KEYS:
                 List<Struct> structs = KeysMode.lists2Structs(keys, arr);
                 updatedValue.put(outputField, structs);
+                break;
+            case MODE_OBJECT:
+                List<Struct> object = ObjectMode.flattenValue(rootKey, value);
+                updatedValue.put(outputField, object);
                 break;
         }
         return updatedValue;
